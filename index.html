@@ -44,10 +44,10 @@ h1{font-size:20px;margin:0 0 4px}.sub{font-size:13px;color:#666}
 
 <script>
 const places=[
- {n:1,name:"김천휴게소 (10시 30분)",addr:"경북 김천시 농소면 경부고속도로 194",lat:36.1297167,lon:128.1642833},
+ {n:1,name:"김천휴게소",addr:"경북 김천시 농소면 경부고속도로 194",lat:36.1297167,lon:128.1642833},
  {n:2,name:"무창포타워",addr:"충남 보령시 웅천읍 간드리3길 67",lat:36.2482,lon:126.5367},
  {n:3,name:"신비의 바닷길 / 무창포해수욕장",addr:"충남 보령시 웅천읍 열린바다1길 10",lat:36.244577,lon:126.536543},
- {n:4,name:"군헌갯벌체험장 (장갑필요)",addr:"충남 보령시 해안로 607-5",lat:36.337235,lon:126.53257},
+ {n:4,name:"군헌갯벌체험장",addr:"충남 보령시 해안로 607-5",lat:36.337235,lon:126.53257},
  {n:5,name:"보령장애인 파크골프장",addr:"충남 보령시 대천방조제로 322",lat:36.353956,lon:126.557575},
  {n:6,name:"웅천 파크골프장",addr:"충남 보령시 웅천읍 노천리 534-1",lat:36.2520,lon:126.5900},
  {n:7,name:"상화원(尙和園)",addr:"충남 보령시 남포면 남포방조제로 408-52",lat:36.2773009,lon:126.538557},
@@ -162,10 +162,25 @@ render();
 <div id="schedule">
   <h2>📅 가족여행 일정</h2>
 
+  <!-- 🏨 숙소 안내 카드 추가 -->
+  <section class="hotel-info" onclick="showInfo(places[8])" style="background:#f0f4ff; border:1.5px solid #2563eb; border-radius:12px; padding:12px; margin-bottom:14px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 6px rgba(37,99,235,0.15);">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="font-size:24px;">🏨</div>
+      <div>
+        <div style="font-size:12px; color:#2563eb; font-weight:bold;">숙소 안내</div>
+        <div style="font-size:16px; font-weight:bold; color:#1e293b;">무창포 비체팰리스 (14시입실, 11시 퇴실) </div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">충남 보령시 웅천읍 열린바다1길 78</div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">티켓번호: FAB19A-12100350246257</div>
+        <div style="font-size:11px; color:#64748b; margin-top:2px;">티켓번호: A179C8-12100350246416</div>
+      </div>
+
+    </div>
+  </section>
+
   <section class="day d1">
     <h3>🔴 10월 9일 금요일</h3>
     <div class="sch">
-      <div class="time">출발</div><div>📍 <b>김천휴게소</b><small>가족 집결</small></div>
+      <div class="time">출발</div><div>📍 <b>김천휴게소(10시 30분)</b><small>가족 집결</small></div>
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="showInfo(places[1])">
@@ -173,23 +188,19 @@ render();
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="showInfo(places[2])">
-      <div class="time">야간</div><div>🌊 <b>신비의 바닷길</b><small>무창포해수욕장</small></div>
+      <div class="time">야간</div><div>🌊 <b>신비의 바닷길 (21시~23시) </b><small>무창포해수욕장</small></div>
     </div>
   </section>
 
   <section class="day d2">
     <h3>🔵 10월 10일 토요일</h3>
     <div class="sch" onclick="showInfo(places[3])">
-      <div class="time">08~11시</div><div>🐚 <b>군헌갯벌체험장</b><small>갯벌체험</small></div>
+      <div class="time">08~11시</div><div>🐚 <b>군헌갯벌체험장 (08:00 ~ 10:30) </b><small>갯벌체험</small></div>
     </div>
     <div class="arrow">↓</div>
     <div class="sch">
       <div class="time">오후</div><div>🍚 <b>점심</b><small>현지 식당 선택</small></div>
-    </div>
-    <div class="arrow">↓</div>
-    <div class="sch" onclick="showInfo(places[4])">
-      <div class="time">오후</div><div>⛳ <b>보령장애인 파크골프장</b><small>군촌동 322 · 선택</small></div>
-    </div>
+    </div>   
     <div class="sch" onclick="showInfo(places[5])">
       <div class="time">또는</div><div>⛳ <b>웅천 파크골프장</b><small>웅천역(폐역) 인근 · 선택</small></div>
     </div>
@@ -199,14 +210,14 @@ render();
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="showInfo(places[2])">
-      <div class="time">야간</div><div>🌙 <b>신비의 바닷길</b><small>야간 일정</small></div>
+      <div class="time">야간</div><div>🌙 <b>신비의 바닷길 (21시~23시) </b><small>야간 일정</small></div>
     </div>
   </section>
 
   <section class="day d3">
     <h3>🟢 10월 11일 일요일</h3>
     <div class="sch" onclick="showInfo(places[2])">
-      <div class="time">오전</div><div>🌊 <b>신비의 바닷길</b></div>
+      <div class="time">오전</div><div>🌊 <b>신비의 바닷길 (09:33 ~ 10:37)</b></div>
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="showInfo(places[6])">
@@ -221,8 +232,7 @@ render();
       <div class="time">이후</div><div>🏠 <b>귀가</b></div>
     </div>
   </section>
-</div>
-<style>
+</div><style>
 #schedule{background:#fff;border-top:1px solid #ddd;padding:14px 12px 30px}
 #schedule h2{font-size:20px;margin:2px 2px 14px}
 .day{border-radius:12px;padding:11px 10px;margin:0 0 12px;border:1px solid #ddd}
