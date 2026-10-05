@@ -1,22 +1,22 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
   <title>무창포 가족여행 지도</title>
 
-  <!-- Leaflet CSS & JS for smooth mobile touch and pinch zoom -->
+  <!-- Leaflet CSS & JS (캠핑장 지도와 동일) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
     * { box-sizing: border-box; }
     html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
-      height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: #f8fafc;
+      background: #f7f7f7;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, sans-serif;
       color: #1e293b;
     }
     body {
@@ -31,9 +31,10 @@
       border-bottom: 1px solid #e2e8f0;
       z-index: 1000;
       box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      text-align: center;
     }
     h1 {
-      font-size: 19px;
+      font-size: 20px;
       margin: 0 0 4px;
       color: #0f172a;
       font-weight: 700;
@@ -43,54 +44,29 @@
       color: #64748b;
     }
 
-    /* Map view styling */
+    /* Map view styling (캠핑장 지도 스타일 적용) */
     #map {
-      flex: 1;
+      height: 50vh;
       min-height: 380px;
       width: 100%;
-      background: #e2e8f0;
+      background: #e5e7eb;
       z-index: 1;
     }
 
-    /* Custom Location Pin Marker without numbers */
-    .custom-pin {
-      width: 24px !important;
-      height: 24px !important;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      background: #ef4444;
-      border: 2px solid #ffffff;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.25);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .custom-pin.option {
-      background: #8b5cf6;
-    }
-    .custom-pin::after {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ffffff;
-    }
-
-    /* Label overlay on map */
-    .custom-label {
+    /* Leaflet Tooltip label styling (캠핑장 지도 고유 툴팁 스타일) */
+    .place-tooltip {
       background: rgba(255, 255, 255, 0.95);
       border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 2px 8px;
-      font-size: 12px;
-      font-weight: 600;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 12.5px;
+      font-weight: bold;
       color: #1e293b;
-      white-space: nowrap;
       box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+      white-space: nowrap;
     }
 
-    /* Info Popup Bottom Card */
+    /* Selected Place Info Popup Bottom Card */
     #info {
       position: fixed;
       left: 12px;
@@ -100,11 +76,11 @@
       background: rgba(255, 255, 255, 0.98);
       border-radius: 14px;
       padding: 14px 16px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
       display: none;
       max-width: 440px;
       margin: 0 auto;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #cbd5e1;
       animation: fadeInUp 0.25s ease-out;
     }
     @keyframes fadeInUp {
@@ -116,9 +92,9 @@
       color: #0f172a;
     }
     .addr {
-      font-size: 12px;
+      font-size: 12.5px;
       color: #64748b;
-      margin-top: 4px;
+      margin-top: 5px;
       line-height: 1.4;
     }
     .buttons {
@@ -142,7 +118,7 @@
       background: #03c75a;
     }
 
-    /* Place List below map */
+    /* Place List section below map */
     #list {
       background: #ffffff;
       border-top: 1px solid #e2e8f0;
@@ -162,8 +138,8 @@
       border-bottom: none;
     }
     .item-icon {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       background: #fee2e2;
       color: #ef4444;
@@ -192,10 +168,10 @@
     #schedule {
       background: #f8fafc;
       border-top: 1px solid #e2e8f0;
-      padding: 16px 14px 30px;
+      padding: 16px 14px 35px;
     }
     #schedule h2 {
-      font-size: 17px;
+      font-size: 18px;
       margin: 0 0 12px;
       color: #0f172a;
     }
@@ -286,7 +262,7 @@
 <!-- Place List Container -->
 <div id="list"></div>
 
-<!-- Schedule Cards Section -->
+<!-- Schedule Section -->
 <div id="schedule">
   <h2>📅 가족여행 일정</h2>
 
@@ -298,27 +274,33 @@
         <div style="font-size:11.5px; color:#2563eb; font-weight:bold;">숙소 안내</div>
         <div style="font-size:15px; font-weight:bold; color:#1e293b;">무창포 비체팰리스</div>
         <div style="font-size:11px; color:#64748b; margin-top:2px;">충남 보령시 웅천읍 열린바다1길 78</div>
-        <div style="font-size:11px; color:#64748b; margin-top:2px;">티켓번호: FAB19A-12100350246257</div>
-        <div style="font-size:11px; color:#64748b; margin-top:2px;">티켓번호: A179C8-12100350246416</div>
       </div>
     </div>
- 
+    <div style="text-align:right; font-size:11px; color:#475569; font-weight:bold; background:#ffffff; padding:6px 10px; border-radius:8px; border:1px solid #cbd5e1;">
+      <div>입실 : 10/9 (금) 14:00</div>
+      <div>퇴실 : 10/11 (일) 11:00</div>
+    </div>
   </section>
 
   <!-- Day 1 Schedule -->
   <section class="day d1">
     <h3>🔴 10월 9일 금요일</h3>
     <div class="sch" onclick="focusPlace('김천휴게소')">
-      <div class="time">출발</div><div>📍 <b>김천휴게소(10시 30분)</b><small>가족 집결</small></div>
+      <div class="time">만남</div><div>📍 <b>김천휴게소(10시 30분)</b><small>가족 집결</small></div>
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="focusPlace('무창포타워')">
-      <div class="time">도착 후</div><div>🗼 <b>무창포타워</b><small>충남 보령시 웅천읍</small></div>
+      <div class="time">점심</div><div>🍚 <b>점심</b><small>무창포 타워 인근 칼국수집</small></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch" onclick="focusPlace('무창포타워')">
+      <div class="time">오후</div><div>🗼 <b>무창포타워</b><small>충남 보령시 웅천읍</small></div>
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="focusPlace('신비의 바닷길 / 무창포해수욕장')">
-      <div class="time">야간</div><div>🥩 <b>저녁 : 바베큐장 또는 고깃집</b><small>무창포해수욕장 인근</small></div>
+      <div class="time">저녁</div><div>🥩 <b>저녁 : 바베큐장 또는 고깃집</b><small>무창포해수욕장 인근</small></div>
     </div>
+    <div class="arrow">↓</div>
     <div class="sch" onclick="focusPlace('신비의 바닷길 / 무창포해수욕장')">
       <div class="time">야간</div><div>🌊 <b>신비의 바닷길 (21시~23시)</b><small>무창포해수욕장</small></div>
     </div>
@@ -328,15 +310,15 @@
   <section class="day d2">
     <h3>🔵 10월 10일 토요일</h3>
     <div class="sch" onclick="focusPlace('군헌갯벌체험장')">
-      <div class="time">08~11시</div><div>🐚 <b>군헌갯벌체험장 (08:00 ~ 10:30)</b><small>갯벌체험</small></div>
+      <div class="time">오전</div><div>🐚 <b>군헌갯벌체험장 (08:00 ~ 10:30)</b><small>갯벌체험</small></div>
     </div>
     <div class="arrow">↓</div>
     <div class="sch">
-      <div class="time">오후</div><div>🍚 <b>점심</b><small>현지 식당 선택</small></div>
+      <div class="time">점심</div><div>🍚 <b>점심</b><small>현지 식당 선택</small></div>
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="focusPlace('웅천 파크골프장')">
-      <div class="time">또는</div><div>⛳ <b>웅천 파크골프장</b><small>웅천역(폐역) 인근 · 선택</small></div>
+      <div class="time">오후</div><div>⛳ <b>웅천 파크골프장 또는 카페</b><small>웅천역(폐역) 인근 · 선택</small></div>
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="focusPlace('신비의 바닷길 / 무창포해수욕장')">
@@ -356,7 +338,7 @@
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="focusPlace('상화원(尙和園)')">
-      <div class="time">오전~오후</div><div>🌳 <b>상화원(尙和園)</b><small>죽도 관광</small></div>
+      <div class="time">오후</div><div>🌳 <b>상화원(尙和園)</b><small>죽도 관광</small></div>
     </div>
     <div class="arrow">↓</div>
     <div class="sch" onclick="focusPlace('개화예술공원')">
@@ -370,53 +352,44 @@
 </div>
 
 <script>
-// Data for the 9 travel destinations
+// Places Data
 const places = [
-  { id: "p1", name: "김천휴게소", addr: "경북 김천시 농소면 경부고속도로 194", lat: 36.1297167, lon: 128.1642833, isOption: false },
-  { id: "p2", name: "무창포타워", addr: "충남 보령시 웅천읍 간드리3길 67", lat: 36.2482, lon: 126.5367, isOption: false },
-  { id: "p3", name: "신비의 바닷길 / 무창포해수욕장", addr: "충남 보령시 웅천읍 열린바다1길 10", lat: 36.244577, lon: 126.536543, isOption: false },
-  { id: "p4", name: "군헌갯벌체험장", addr: "충남 보령시 해안로 607-5", lat: 36.337235, lon: 126.53257, isOption: false },
-  { id: "p5", name: "보령장애인 파크골프장", addr: "충남 보령시 대천방조제로 322", lat: 36.353956, lon: 126.557575, isOption: true },
-  { id: "p6", name: "웅천 파크골프장", addr: "충남 보령시 웅천읍 노천리 534-1", lat: 36.2520, lon: 126.5900, isOption: true },
-  { id: "p7", name: "상화원(尙和園)", addr: "충남 보령시 남포면 남포방조제로 408-52", lat: 36.2773009, lon: 126.538557, isOption: false },
-  { id: "p8", name: "개화예술공원", addr: "충남 보령시 성주면 성주산로 673-47", lat: 36.311705, lon: 126.657382, isOption: false },
-  { id: "p9", name: "비체팰리스", addr: "충남 보령시 웅천읍 열린바다1길 78", lat: 36.241512, lon: 126.533215, isOption: false }
+  { name: "김천휴게소", addr: "경북 김천시 농소면 경부고속도로 194", lat: 36.1297167, lng: 128.1642833, isOption: false },
+  { name: "무창포타워", addr: "충남 보령시 웅천읍 간드리3길 67", lat: 36.2482, lng: 126.5367, isOption: false },
+  { name: "신비의 바닷길 / 무창포해수욕장", addr: "충남 보령시 웅천읍 열린바다1길 10", lat: 36.244577, lng: 126.536543, isOption: false },
+  { name: "군헌갯벌체험장", addr: "충남 보령시 해안로 607-5", lat: 36.337235, lng: 126.53257, isOption: false },
+  { name: "보령장애인 파크골프장", addr: "충남 보령시 대천방조제로 322", lat: 36.353956, lng: 126.557575, isOption: true },
+  { name: "웅천 파크골프장", addr: "충남 보령시 웅천읍 노천리 534-1", lat: 36.2520, lng: 126.5900, isOption: true },
+  { name: "상화원(尙和園)", addr: "충남 보령시 남포면 남포방조제로 408-52", lat: 36.2773009, lng: 126.538557, isOption: false },
+  { name: "개화예술공원", addr: "충남 보령시 성주면 성주산로 673-47", lat: 36.311705, lng: 126.657382, isOption: false },
+  { name: "비체팰리스", addr: "충남 보령시 웅천읍 열린바다1길 78", lat: 36.241512, lng: 126.533215, isOption: false }
 ];
 
 // 1. Initialize Leaflet Map
-const map = L.map('map', {
-  tap: true,
-  bounceAtZoomLimits: false
-}).setView([36.29, 127.20], 9);
+const map = L.map('map').setView([36.29, 126.60], 10);
 
-// 2. Esri World Street Map Tile Layer (No API Key Required & No Watermark)
+// 2. OpenStreetMap Tile Layer (캠핑장 지도와 정확히 동일)
+// OpenStreetMap 대신 Esri 지도 타일 사용 (차단 없음)
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
   maxZoom: 19,
   attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ'
 }).addTo(map);
-
-// 3. Add Custom Markers without numbers & no connecting lines
+// 3. Add Leaflet Markers & Tooltips (번호 선 없이 깔끔한 표준 마커)
 const bounds = [];
 places.forEach(p => {
-  bounds.push([p.lat, p.lon]);
+  bounds.push([p.lat, p.lng]);
 
-  // Clean Pin Icon (No numbers)
-  const pinIcon = L.divIcon({
-    className: '',
-    html: `<div class="custom-pin ${p.isOption ? 'option' : ''}"></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 24]
-  });
+  const marker = L.marker([p.lat, p.lng]).addTo(map);
 
-  const marker = L.marker([p.lat, p.lon], { icon: pinIcon }).addTo(map);
-
-  // Text Tooltip for Place Names
+  // Bind tooltip to display place name above/beside marker (캠핑장 지도와 동일)
   marker.bindTooltip(p.name, {
     permanent: true,
-    direction: 'bottom',
-    className: 'custom-label',
-    offset: [0, 4]
+    direction: "top",
+    offset: [0, -10],
+    className: 'place-tooltip'
   });
+
+  marker.bindPopup(`<b>${p.name}</b><br><small>${p.addr}</small>`);
 
   marker.on('click', (e) => {
     L.DomEvent.stopPropagation(e);
@@ -424,19 +397,19 @@ places.forEach(p => {
   });
 });
 
-// Auto-fit bounds to display all locations
+// Auto-fit bounds so all places fit on map initialization
 map.fitBounds(bounds, { padding: [35, 35] });
 
-// Hide popup card on map click
+// Hide info popup on map click
 map.on('click', () => {
   document.getElementById('info').style.display = 'none';
 });
 
-// Show Info Card for Selected Place
+// Show Info Bottom Card
 function showInfo(p) {
   const info = document.getElementById('info');
   info.style.display = 'block';
-  const g = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.lat + ',' + p.lon)}`;
+  const g = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.lat + ',' + p.lng)}`;
   const n = `https://map.naver.com/p/search/${encodeURIComponent(p.addr)}`;
   info.innerHTML = `
     <b>📍 ${p.name}</b>
@@ -448,16 +421,16 @@ function showInfo(p) {
   `;
 }
 
-// Pan & Zoom to specific location
+// Focus to specific place on map
 function focusPlace(name) {
   const p = places.find(item => item.name.includes(name) || name.includes(item.name));
   if (!p) return;
-  map.flyTo([p.lat, p.lon], 14, { duration: 0.9 });
+  map.flyTo([p.lat, p.lng], 14, { duration: 0.9 });
   showInfo(p);
   document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// Generate Location List without sequence numbers
+// Generate Place List HTML below map
 document.getElementById('list').innerHTML = places.map(p => `
   <div class="item" onclick="focusPlace('${p.name}')">
     <div class="item-icon ${p.isOption ? 'option-icon' : ''}">📍</div>
