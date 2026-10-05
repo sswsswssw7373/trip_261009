@@ -2,14 +2,14 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>무창포 가족여행 지도</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Arial,"Malgun Gothic",sans-serif;background:#f5f6f8;color:#222}
 body{display:flex;flex-direction:column}
 header{padding:14px 16px;background:#fff;border-bottom:1px solid #ddd;z-index:10}
 h1{font-size:20px;margin:0 0 4px}.sub{font-size:13px;color:#666}
-#map{position:relative;flex:1;min-height:420px;overflow:hidden;background:#dce6ea;touch-action:none}
+#map{position:relative;flex:1;min-height:380px;overflow:hidden;background:#dce6ea;touch-action:pan-x pan-y}
 #tiles{position:absolute;left:0;top:0}
 .tile{position:absolute;width:256px;height:256px;user-select:none;-webkit-user-drag:none}
 #overlay{position:absolute;left:0;top:0;pointer-events:none}
@@ -48,11 +48,10 @@ const places=[
  {n:2,name:"무창포타워",addr:"충남 보령시 웅천읍 간드리3길 67",lat:36.2482,lon:126.5367},
  {n:3,name:"신비의 바닷길 / 무창포해수욕장",addr:"충남 보령시 웅천읍 열린바다1길 10",lat:36.244577,lon:126.536543},
  {n:4,name:"군헌갯벌체험장",addr:"충남 보령시 해안로 607-5",lat:36.337235,lon:126.53257},
- {n:5,name:"보령장애인 파크골프장",addr:"충남 보령시 대천방조제로 322",lat:36.353956,lon:126.557575},
- {n:6,name:"웅천 파크골프장",addr:"충남 보령시 웅천읍 노천리 534-1",lat:36.2520,lon:126.5900},
- {n:7,name:"상화원(尙和園)",addr:"충남 보령시 남포면 남포방조제로 408-52",lat:36.2773009,lon:126.538557},
- {n:8,name:"개화예술공원",addr:"충남 보령시 성주면 성주산로 673-47",lat:36.311705,lon:126.657382},
-  {n:9, name:"비체팰리스", addr:"충남 보령시 웅천읍 열린바다1길 78", lat:36.241512, lon:126.533215}
+ {n:5,name:"웅천 파크골프장",addr:"충남 보령시 웅천읍 노천리 534-1",lat:36.2520,lon:126.5900},
+ {n:6,name:"상화원(尙和園)",addr:"충남 보령시 남포면 남포방조제로 408-52",lat:36.2773009,lon:126.538557},
+ {n:7,name:"개화예술공원",addr:"충남 보령시 성주면 성주산로 673-47",lat:36.311705,lon:126.657382},
+  {n:8, name:"비체팰리스", addr:"충남 보령시 웅천읍 열린바다1길 78", lat:36.241512, lon:126.533215}
 ];
 // 지도에 표시할 대표 이동순서. 파크골프 두 곳은 선택지라 점선으로 표시.
 const route=[1,2,3,4,6,3,7,8];
@@ -125,14 +124,84 @@ function zoomAt(n){
  const old=z; z=Math.max(7,Math.min(13,z+n)); if(z===old)return;
  render();
 }
-map.addEventListener('pointerdown',e=>{dragging=true;last={x:e.clientX,y:e.clientY};map.setPointerCapture(e.pointerId)});
-map.addEventListener('pointermove',e=>{if(!dragging)return;let dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};moveBy(dx,dy)});
-map.addEventListener('pointerup',()=>dragging=false);
-map.addEventListener('click',()=>info.style.display='none');
-document.getElementById('zin').onclick=(e)=>{e.stopPropagation();zoomAt(1)};
-document.getElementById('zout').onclick=(e)=>{e.stopPropagation();zoomAt(-1)};
-document.getElementById('home').onclick=(e)=>{e.stopPropagation();z=9;center={lat:36.29,lon:127.20};render()};
+// ===== 핀치 줌 및 터치/마이크 드래그 이벤트 리스너 전체 교체 =====
+let isMultiTouch = false;
+let initialPinchDist = null;
 
+// 두 점 사이의 거리 계산 함수
+function getDistance(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.hypot(dx, dy);
+}
+
+// 1. 터치 시작 (단일 터치 vs 멀티 터치 감지)
+map.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    // 손가락 2개일 때: 핀치 줌 모드 시작
+    isMultiTouch = true;
+    dragging = false;
+    initialPinchDist = getDistance(e.touches);
+  } else if (e.touches.length === 1) {
+    // 손가락 1개일 때: 드래그 이동 준비
+    isMultiTouch = false;
+    dragging = true;
+    last = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+}, { passive: false });
+
+// 2. 터치 이동 (드래그 및 핀치 줌 실행)
+map.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && initialPinchDist) {
+    // 브라우저 기본 제스처 동작 방지
+    e.preventDefault();
+    
+    const currentDist = getDistance(e.touches);
+    const diff = currentDist - initialPinchDist;
+
+    // 감도 조절 (40px 이상 손가락이 벌어지거나 좁아지면 줌)
+    if (Math.abs(diff) > 40) {
+      zoomAt(diff > 0 ? 1 : -1);
+      initialPinchDist = currentDist; // 다음 계산 기준점 업데이트
+    }
+  } else if (e.touches.length === 1 && dragging && !isMultiTouch) {
+    // 손가락 1개 드래그 이동
+    let dx = e.touches[0].clientX - last.x;
+    let dy = e.touches[0].clientY - last.y;
+    last = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    moveBy(dx, dy);
+  }
+}, { passive: false });
+
+// 3. 터치 종료
+map.addEventListener('touchend', e => {
+  if (e.touches.length < 2) {
+    initialPinchDist = null;
+  }
+  if (e.touches.length === 0) {
+    dragging = false;
+    isMultiTouch = false;
+  }
+});
+
+// 4. PC 마우스 전용 드래그 처리 (PC와 모바일 분리)
+map.addEventListener('mousedown', e => {
+  if (e.button !== 0) return; // 좌클릭만 허용
+  dragging = true;
+  last = { x: e.clientX, y: e.clientY };
+});
+
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  let dx = e.clientX - last.x;
+  let dy = e.clientY - last.y;
+  last = { x: e.clientX, y: e.clientY };
+  moveBy(dx, dy);
+});
+
+window.addEventListener('mouseup', () => {
+  dragging = false;
+});
 // 마우스 휠 / 트랙패드 확대·축소
 map.addEventListener('wheel',e=>{
   e.preventDefault();
