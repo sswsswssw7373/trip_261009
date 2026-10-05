@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>무창포 가족여행 지도</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Arial,"Malgun Gothic",sans-serif;background:#f5f6f8;color:#222}
+body{display:flex;flex-direction:column}
+header{padding:14px 16px;background:#fff;border-bottom:1px solid #ddd;z-index:10}
+h1{font-size:20px;margin:0 0 4px}.sub{font-size:13px;color:#666}
+#map{position:relative;flex:1;min-height:420px;overflow:hidden;background:#dce6ea;touch-action:none}
+#tiles{position:absolute;left:0;top:0}
+.tile{position:absolute;width:256px;height:256px;user-select:none;-webkit-user-drag:none}
+#overlay{position:absolute;left:0;top:0;pointer-events:none}
+.marker{position:absolute;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:translate(-14px,-27px) rotate(-45deg);background:#d7263d;border:3px solid white;box-shadow:0 2px 6px #555;z-index:3}
+.marker span{display:block;transform:rotate(45deg);color:white;font-weight:bold;font-size:13px;text-align:center;line-height:22px}
+.marker.special{background:#1565c0}.marker.option{background:#7b1fa2}
+.label{position:absolute;transform:translate(-50%,5px);background:rgba(255,255,255,.94);padding:3px 7px;border-radius:10px;white-space:nowrap;font-size:12px;font-weight:bold;box-shadow:0 1px 4px #888;z-index:4}
+#controls{position:absolute;right:12px;top:12px;z-index:20;display:flex;flex-direction:column;gap:5px}
+#controls button{width:42px;height:42px;border:1px solid #bbb;background:white;border-radius:8px;font-size:22px;box-shadow:0 2px 6px #999}
+#info{position:absolute;left:10px;right:10px;bottom:10px;z-index:20;background:rgba(255,255,255,.96);border-radius:12px;padding:11px;box-shadow:0 2px 10px #777;display:none;max-width:430px}
+#info b{font-size:16px}.addr{font-size:12px;color:#666;margin-top:4px}.buttons{display:flex;gap:6px;margin-top:8px}.buttons a{flex:1;text-align:center;text-decoration:none;padding:8px;border-radius:7px;background:#1565c0;color:#fff;font-size:12px}
+#list{background:#fff;border-top:1px solid #ddd;max-height:34vh;overflow:auto;padding:10px}
+.item{display:flex;gap:9px;padding:8px 4px;border-bottom:1px solid #eee;align-items:center}
+.num{width:25px;height:25px;border-radius:50%;background:#d7263d;color:#fff;text-align:center;line-height:25px;font-weight:bold;font-size:12px}
+.item .name{font-weight:bold;font-size:14px}.item .small{font-size:11px;color:#777}
+.note{font-size:11px;color:#666;padding:8px 4px}
+@media(min-width:800px){#list{max-height:220px}.item{display:inline-flex;width:32%;vertical-align:top;border:0}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗺️ 무창포 가족여행 지도</h1>
+  <div class="sub">2026년 10월 9일 ~ 11일 · 전체 여행 장소</div>
+</header>
+<div id="map">
+  <div id="tiles"></div>
+  <svg id="overlay"></svg>
+  <div id="controls"><button id="zin">＋</button><button id="zout">−</button><button id="home">⌂</button></div>
+  <div id="info"></div>
+</div>
+<div id="list"></div>
+
+<script>
+const places=[
+ {n:1,name:"김천휴게소",addr:"경북 김천시 농소면 경부고속도로 194",lat:36.1297167,lon:128.1642833},
+ {n:2,name:"무창포타워",addr:"충남 보령시 웅천읍 간드리3길 67",lat:36.2482,lon:126.5367},
+ {n:3,name:"신비의 바닷길 / 무창포해수욕장",addr:"충남 보령시 웅천읍 열린바다1길 10",lat:36.244577,lon:126.536543},
+ {n:4,name:"군헌갯벌체험장",addr:"충남 보령시 해안로 607-5",lat:36.337235,lon:126.53257},
+ {n:5,name:"보령장애인 파크골프장",addr:"충남 보령시 대천방조제로 322",lat:36.353956,lon:126.557575},
+ {n:6,name:"웅천 파크골프장",addr:"충남 보령시 웅천읍 노천리 534-1",lat:36.2520,lon:126.5900},
+ {n:7,name:"상화원(尙和園)",addr:"충남 보령시 남포면 남포방조제로 408-52",lat:36.2773009,lon:126.538557},
+ {n:8,name:"개화예술공원",addr:"충남 보령시 성주면 성주산로 673-47",lat:36.311705,lon:126.657382}
+];
+// 지도에 표시할 대표 이동순서. 파크골프 두 곳은 선택지라 점선으로 표시.
+const route=[1,2,3,4,6,3,7,8];
+const optional=[5,6];
+
+const map=document.getElementById('map'), tiles=document.getElementById('tiles'), overlay=document.getElementById('overlay'), info=document.getElementById('info');
+let z=9, center={lat:36.29,lon:127.20}, origin={x:0,y:0}, dragging=false,last={x:0,y:0};
+
+function world(lat,lon,zoom){
+ const s=256*Math.pow(2,zoom), x=(lon+180)/360*s;
+ const r=lat*Math.PI/180, y=(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*s;
+ return {x,y};
+}
+function geo(p){let c=world(center.lat,center.lon,z);return {x:map.clientWidth/2+(world(p.lat,p.lon,z).x-c.x),y:map.clientHeight/2+(world(p.lat,p.lon,z).y-c.y)}}
+function render(){
+ const w=map.clientWidth,h=map.clientHeight,c=world(center.lat,center.lon,z);
+ const left=c.x-w/2,top=c.y-h/2;
+ tiles.innerHTML='';
+ const x0=Math.floor(left/256)-1,x1=Math.floor((left+w)/256)+1;
+ const y0=Math.floor(top/256)-1,y1=Math.floor((top+h)/256)+1;
+ const max=Math.pow(2,z);
+ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){
+   if(y<0||y>=max)continue;
+   const img=document.createElement('img');img.className='tile';
+   let xx=((x%max)+max)%max;
+   img.src=`https://tile.openstreetmap.org/${z}/${xx}/${y}.png`;
+   img.style.left=(x*256-left)+'px';img.style.top=(y*256-top)+'px';
+   tiles.appendChild(img);
+ }
+ overlay.setAttribute('width',w);overlay.setAttribute('height',h);overlay.innerHTML='';
+ const pts={}; places.forEach(p=>pts[p.n]=geo(p));
+ // main route
+ const main=route.map(n=>pts[n]).filter(Boolean);
+ if(main.length>1){
+   const pl=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+   pl.setAttribute('points',main.map(p=>p.x+','+p.y).join(' '));
+   pl.setAttribute('fill','none');pl.setAttribute('stroke','#d7263d');pl.setAttribute('stroke-width','4');pl.setAttribute('stroke-linejoin','round');pl.setAttribute('stroke-linecap','round');
+   overlay.appendChild(pl);
+ }
+ // optional alternative from gunheon to each park
+ const a=pts[4],b=pts[5],c2=pts[6];
+ [[a,b],[a,c2]].forEach(pair=>{
+   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+   line.setAttribute('x1',pair[0].x);line.setAttribute('y1',pair[0].y);line.setAttribute('x2',pair[1].x);line.setAttribute('y2',pair[1].y);
+   line.setAttribute('stroke','#7b1fa2');line.setAttribute('stroke-width','3');line.setAttribute('stroke-dasharray','8 7');overlay.appendChild(line);
+ });
+ document.querySelectorAll('.marker,.label').forEach(e=>e.remove());
+ places.forEach(p=>{
+   const q=pts[p.n];
+   const m=document.createElement('div');m.className='marker'+(optional.includes(p.n)?' option':'');
+   m.style.left=q.x+'px';m.style.top=q.y+'px';m.innerHTML='<span>'+p.n+'</span>';
+   m.onclick=e=>{e.stopPropagation();showInfo(p)};
+   map.appendChild(m);
+   const lab=document.createElement('div');lab.className='label';lab.style.left=q.x+'px';lab.style.top=(q.y+2)+'px';lab.textContent=p.name;
+   lab.onclick=e=>{e.stopPropagation();showInfo(p)};map.appendChild(lab);
+ });
+}
+function showInfo(p){
+ info.style.display='block';
+ const g=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.lat+','+p.lon)}`;
+ info.innerHTML=`<b>${p.n}. ${p.name}</b><div class="addr">${p.addr}</div><div class="buttons"><a target="_blank" href="${g}">Google 지도에서 보기</a><a target="_blank" href="https://map.naver.com/p/search/${encodeURIComponent(p.addr)}">네이버지도</a></div>`;
+}
+function moveBy(dx,dy){
+ const c=world(center.lat,center.lon,z); const n={x:c.x-dx,y:c.y-dy};
+ const s=256*Math.pow(2,z);center.lon=n.x/s*360-180;
+ const y=2*Math.PI*(1-n.y/s);center.lat=180/Math.PI*Math.atan(Math.sinh(y-Math.PI));
+ render();
+}
+function zoomAt(n){
+ const old=z; z=Math.max(7,Math.min(13,z+n)); if(z===old)return;
+ render();
+}
+map.addEventListener('pointerdown',e=>{dragging=true;last={x:e.clientX,y:e.clientY};map.setPointerCapture(e.pointerId)});
+map.addEventListener('pointermove',e=>{if(!dragging)return;let dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};moveBy(dx,dy)});
+map.addEventListener('pointerup',()=>dragging=false);
+map.addEventListener('click',()=>info.style.display='none');
+document.getElementById('zin').onclick=(e)=>{e.stopPropagation();zoomAt(1)};
+document.getElementById('zout').onclick=(e)=>{e.stopPropagation();zoomAt(-1)};
+document.getElementById('home').onclick=(e)=>{e.stopPropagation();z=9;center={lat:36.29,lon:127.20};render()};
+
+// 마우스 휠 / 트랙패드 확대·축소
+map.addEventListener('wheel',e=>{
+  e.preventDefault();
+  zoomAt(e.deltaY<0?1:-1);
+},{passive:false});
+
+// 더블클릭 확대
+map.addEventListener('dblclick',e=>{
+  e.preventDefault();
+  zoomAt(1);
+});
+
+// 버튼/마커 클릭이 지도 클릭으로 전파되지 않도록
+document.querySelectorAll('#controls button').forEach(b=>b.addEventListener('pointerdown',e=>e.stopPropagation()));
+
+window.addEventListener('resize',render);
+
+document.getElementById('list').innerHTML=places.map(p=>`
+<div class="item" onclick="showInfo(places[${p.n-1}])">
+ <div class="num">${p.n}</div><div><div class="name">${p.name}${optional.includes(p.n)?' · 선택':''}</div><div class="small">${p.addr}</div></div>
+</div>`).join('')+
+'<div class="note">🔴 기본 이동 흐름 · 🟣 파크골프 선택지 · 지도는 OpenStreetMap 기반입니다. 지도 타일은 인터넷 연결이 필요합니다.</div>';
+
+render();
+</script>
+
+<div id="schedule">
+  <h2>📅 가족여행 일정</h2>
+
+  <section class="day d1">
+    <h3>🔴 10월 9일 금요일</h3>
+    <div class="sch">
+      <div class="time">출발</div><div>📍 <b>김천휴게소</b><small>가족 집결</small></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch" onclick="showInfo(places[1])">
+      <div class="time">도착 후</div><div>🗼 <b>무창포타워</b><small>충남 보령시 웅천읍</small></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch" onclick="showInfo(places[2])">
+      <div class="time">야간</div><div>🌊 <b>신비의 바닷길</b><small>무창포해수욕장</small></div>
+    </div>
+  </section>
+
+  <section class="day d2">
+    <h3>🔵 10월 10일 토요일</h3>
+    <div class="sch" onclick="showInfo(places[3])">
+      <div class="time">08~11시</div><div>🐚 <b>군헌갯벌체험장</b><small>갯벌체험</small></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch">
+      <div class="time">오후</div><div>🍚 <b>점심</b><small>현지 식당 선택</small></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch" onclick="showInfo(places[4])">
+      <div class="time">오후</div><div>⛳ <b>보령장애인 파크골프장</b><small>군촌동 322 · 선택</small></div>
+    </div>
+    <div class="sch" onclick="showInfo(places[5])">
+      <div class="time">또는</div><div>⛳ <b>웅천 파크골프장</b><small>웅천역(폐역) 인근 · 선택</small></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch">
+      <div class="time">저녁</div><div>☕ <b>카페 / 휴식</b></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch" onclick="showInfo(places[2])">
+      <div class="time">야간</div><div>🌙 <b>신비의 바닷길</b><small>야간 일정</small></div>
+    </div>
+  </section>
+
+  <section class="day d3">
+    <h3>🟢 10월 11일 일요일</h3>
+    <div class="sch" onclick="showInfo(places[2])">
+      <div class="time">오전</div><div>🌊 <b>신비의 바닷길</b></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch" onclick="showInfo(places[6])">
+      <div class="time">오전~오후</div><div>🌳 <b>상화원(尙和園)</b><small>죽도 관광</small></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch" onclick="showInfo(places[7])">
+      <div class="time">오후</div><div>🎨 <b>개화예술공원</b></div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="sch">
+      <div class="time">이후</div><div>🏠 <b>귀가</b></div>
+    </div>
+  </section>
+</div>
+<style>
+#schedule{background:#fff;border-top:1px solid #ddd;padding:14px 12px 30px}
+#schedule h2{font-size:20px;margin:2px 2px 14px}
+.day{border-radius:12px;padding:11px 10px;margin:0 0 12px;border:1px solid #ddd}
+.day h3{margin:0 0 9px;font-size:16px}
+.d1{background:#fff8f8}.d2{background:#f7fbff}.d3{background:#f7fff8}
+.sch{display:flex;align-items:center;gap:10px;background:#fff;border-radius:9px;padding:9px 8px;border:1px solid #eee;cursor:pointer}
+.sch:active{background:#f0f0f0}
+.time{width:65px;flex:none;font-size:11px;color:#666;text-align:center}
+.sch b{font-size:14px}.sch small{display:block;color:#777;font-size:11px;margin-top:2px}
+.arrow{text-align:center;height:18px;line-height:18px;color:#888;font-weight:bold}
+</style>
+</body>
+</html>
