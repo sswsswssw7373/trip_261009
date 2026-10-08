@@ -288,16 +288,16 @@
     <div class="sch" onclick="focusPlace('김천휴게소')">
       <div class="time">만남</div><div>📍 <b>김천휴게소(10시 30분)</b></div>
     </div>
-    <div class="sch" onclick="focusPlace('무창포타워')">
-      <div class="time">점심</div><div>🍚 <b>점심 : 해수욕장 인근 칼국수집</div>
+    <div class="sch" onclick="focusPlace('신 무창포 맛집 손칼국수')">
+      <div class="time">점심</div><div>🍚 <b> 신 무창포 맛집 손 칼국수</div>
     </div>
     <div class="sch" onclick="focusPlace('무창포타워')">
       <div class="time">오후</div><div>🗼 <b>무창포타워 (해수욕장근처)</b></div>
     </div>
-    <div class="sch" onclick="focusPlace('신비의 바닷길 / 무창포해수욕장')">
-      <div class="time">저녁</div><div>🥩 <b>저녁 : 바베큐장 또는 고깃집</b></div>
+    <div class="sch" onclick="focusPlace('우돈숯불촌')">
+      <div class="time">저녁</div><div>🥩 <b>우돈숯불촌 (해수욕장근처)</b></div>
     </div>
-    <div class="sch" onclick="focusPlace('신비의 바닷길 / 무창포해수욕장')">
+    <div class="sch" onclick="focusPlace('신비의 바닷길')">
       <div class="time">야간</div><div>🌊 <b>신비의 바닷길 (21시~23시)</b></div>
     </div>
   </section>
@@ -314,10 +314,13 @@
     <div class="sch" onclick="focusPlace('웅천 파크골프장')">
       <div class="time">오후</div><div>⛳ <b>웅천 파크골프장 또는 카페</b></div>
     </div>
-    <div class="sch" onclick="focusPlace('신비의 바닷길 / 무창포해수욕장')">
+      <div class="sch" onclick="focusPlace('상화원(尙和園)')">
+      <div class="time">오후</div><div>🌳 <b>상화원(尙和園)</b></div>
+    </div>
+    <div class="sch" onclick="focusPlace('신비의 바닷길')">
       <div class="time">저녁</div><div>🐟 <b>무창포 인근 횟집에서 저녁</b></div>
     </div>
-    <div class="sch" onclick="focusPlace('신비의 바닷길 / 무창포해수욕장')">
+    <div class="sch" onclick="focusPlace('신비의 바닷길')">
       <div class="time">야간</div><div>🌙 <b>신비의 바닷길 (21시~23시)</b></div>
     </div>
   </section>
@@ -325,12 +328,9 @@
   <!-- Day 3 Schedule -->
   <section class="day d3">
     <h3>🟢 10월 11일 일요일</h3>
-    <div class="sch" onclick="focusPlace('신비의 바닷길 / 무창포해수욕장')">
+    <div class="sch" onclick="focusPlace('신비의 바닷길')">
       <div class="time">오전</div><div>🌊 <b>신비의 바닷길 (09:33 ~ 10:37)</b></div>
-    </div>
-    <div class="sch" onclick="focusPlace('상화원(尙和園)')">
-      <div class="time">오후</div><div>🌳 <b>상화원(尙和園)</b></div>
-    </div>
+    </div>    
     <div class="sch" onclick="focusPlace('개화예술공원')">
       <div class="time">오후</div><div>🎨 <b>개화예술공원</b></div>
     </div>
@@ -345,12 +345,14 @@
 const places = [
   { name: "김천휴게소", addr: "경북 김천시 농소면 경부고속도로 194", lat: 36.1297167, lng: 128.1642833, isOption: false },
   { name: "무창포타워", addr: "충남 보령시 웅천읍 간드리3길 67", lat: 36.2482, lng: 126.5367, isOption: false },
-  { name: "신비의 바닷길 / 무창포해수욕장", addr: "충남 보령시 웅천읍 열린바다1길 10", lat: 36.244577, lng: 126.536543, isOption: false },
+  { name: "신비의 바닷길", addr: "충남 보령시 웅천읍 열린바다1길 10", lat: 36.244577, lng: 126.536543, isOption: false },
   { name: "군헌갯벌체험장", addr: "충남 보령시 해안로 607-5", lat: 36.337235, lng: 126.53257, isOption: false },
   { name: "보령장애인 파크골프장", addr: "충남 보령시 대천방조제로 322", lat: 36.353956, lng: 126.557575, isOption: true },
   { name: "웅천 파크골프장", addr: "충남 보령시 웅천읍 노천리 534-1", lat: 36.2520, lng: 126.5900, isOption: true },
   { name: "상화원(尙和園)", addr: "충남 보령시 남포면 남포방조제로 408-52", lat: 36.2773009, lng: 126.538557, isOption: false },
   { name: "개화예술공원", addr: "충남 보령시 성주면 성주산로 673-47", lat: 36.311705, lng: 126.657382, isOption: false },
+  { name: "우돈숯불촌", addr: "충남 보령시 웅천읍 열린바다로 290",  lat: 36.2442,  lng: 126.5362,  isOption: false},
+  { name: "신 무창포 맛집 손칼국수", addr: "충남 보령시 웅천읍 열린바다로 306", lat: 36.2448, lng: 126.5370, isOption: false},
   { name: "비체팰리스", addr: "충남 보령시 웅천읍 열린바다1길 78", lat: 36.241512, lng: 126.533215, isOption: false }
 ];
 
